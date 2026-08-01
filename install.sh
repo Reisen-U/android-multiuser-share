@@ -21,22 +21,35 @@ pkg install -y python curl
 mkdir -p "$APP_DIR" "$BIN_DIR"
 curl -fsSL "$REPO_RAW/app.py" -o "$APP_DIR/app.py"
 
-read -r -p "登录用户名 [share]: " SHARE_USERNAME
-SHARE_USERNAME="${SHARE_USERNAME:-share}"
-while :; do
-  printf "登录密码（至少 12 位）： "
-  stty -echo
-  read -r SHARE_PASSWORD
-  stty echo
-  printf "\n"
-  [ "${#SHARE_PASSWORD}" -ge 12 ] && break
-  echo "密码太短，请重试。"
-done
+read -r -p "启用用户名密码保护？[Y/n] " SHARE_AUTH_REPLY </dev/tty
+case "${SHARE_AUTH_REPLY:-Y}" in
+  n|N|no|NO)
+    SHARE_AUTH_ENABLED=0
+    SHARE_USERNAME=""
+    SHARE_PASSWORD=""
+    echo "警告：公开访问模式下，同一 Wi-Fi 的任何设备都可查看、上传和删除内容。"
+    ;;
+  *)
+    SHARE_AUTH_ENABLED=1
+    read -r -p "登录用户名 [share]: " SHARE_USERNAME </dev/tty
+    SHARE_USERNAME="${SHARE_USERNAME:-share}"
+    while :; do
+      printf "登录密码（至少 12 位）： "
+      stty -echo </dev/tty
+      read -r SHARE_PASSWORD </dev/tty
+      stty echo </dev/tty
+      printf "\n"
+      [ "${#SHARE_PASSWORD}" -ge 12 ] && break
+      echo "密码太短，请重试。"
+    done
+    ;;
+esac
 
 umask 077
 {
   printf 'export SHARE_USERNAME=%q\n' "$SHARE_USERNAME"
   printf 'export SHARE_PASSWORD=%q\n' "$SHARE_PASSWORD"
+  printf 'export SHARE_AUTH_ENABLED=%q\n' "$SHARE_AUTH_ENABLED"
   printf 'export SHARE_DATA_DIR=%q\n' "$HOME/multiuser-share"
   printf 'export SHARE_PORT=%q\n' "8080"
 } > "$CONFIG_FILE"

@@ -26,13 +26,14 @@ FILES_META_FILE = DATA_DIR / "files.json"
 CONFIG_FILE = Path(os.getenv("SHARE_CONFIG_FILE", Path.home() / ".local/share/android-multiuser-share/config.env"))
 USERNAME = os.getenv("SHARE_USERNAME", "share")
 PASSWORD = os.getenv("SHARE_PASSWORD", "")
+AUTH_ENABLED = os.getenv("SHARE_AUTH_ENABLED", "1").lower() not in {"0", "false", "no"}
 HOST = os.getenv("SHARE_HOST", "0.0.0.0")
 PORT = int(os.getenv("SHARE_PORT", "8080"))
 MAX_UPLOAD_MB = int(os.getenv("SHARE_MAX_UPLOAD_MB", "512"))
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 MAX_REQUEST_BYTES = int(os.getenv("SHARE_MAX_REQUEST_MB", str(MAX_UPLOAD_MB * 4))) * 1024 * 1024
 
-if not PASSWORD:
+if AUTH_ENABLED and not PASSWORD:
     raise RuntimeError("请先设置 SHARE_PASSWORD，拒绝以无密码模式启动。")
 
 FILES_DIR.mkdir(parents=True, exist_ok=True)
@@ -152,6 +153,8 @@ class ShareHandler(BaseHTTPRequestHandler):
     server_version = "AndroidMultiuserShare/2.0"
 
     def authenticated(self) -> bool:
+        if not AUTH_ENABLED:
+            return True
         header = self.headers.get("Authorization", "")
         if not header.startswith("Basic "):
             return False
@@ -247,6 +250,7 @@ class ShareHandler(BaseHTTPRequestHandler):
             files_html.append(f'<article class="file"><label class="select"><input type="checkbox" name="files" value="{html.escape(file.name, quote=True)}"> 选择</label>{preview}<div class="file-info"><a class="file-name" href="/download/{link}">{name}</a><small class="file-expiry">{html.escape(expiry)}</small></div><time class="file-date">{html.escape(format_created(uploaded_at))}</time><span class="file-kind">{html.escape(file_type_label(file.name))}</span><span class="file-size">{readable_size(file.stat().st_size)}</span></article>')
         file_list = "\n".join(files_html) or "<p class=empty>暂无文件</p>"
 
+        password_controls = '<details><summary>修改登录密码</summary><form action="/password" method="post"><div class="password-row"><input name="new_password" type="password" minlength="12" placeholder="新密码（至少 12 位）" required><input name="confirm_password" type="password" minlength="12" placeholder="再次输入新密码" required></div><button>更新密码</button><span class=hint>修改后，浏览器会要求使用新密码重新登录。</span></form></details>' if AUTH_ENABLED else '<p class="hint">当前为公开访问模式：同一 Wi-Fi 中的任何设备都可访问。</p>'
         self.respond_html(f"""<!doctype html><html lang="zh-CN"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>多用户共享</title>
 <style>
@@ -254,7 +258,7 @@ body{{max-width:760px;margin:24px auto;padding:0 16px;font:16px system-ui;color:
 .files.list-layout .thumb-column{{display:none}}.files.list-layout.list-thumbnails .file-header,.files.list-layout.list-thumbnails .file{{grid-template-columns:52px minmax(160px,2fr) minmax(100px,1fr) minmax(80px,1fr) 70px}}.files.list-layout.list-thumbnails .thumb-column{{display:block}}.files.list-layout.list-thumbnails .file-visual{{display:grid;width:46px;height:46px}}.files.list-layout.list-thumbnails .file-info{{padding-left:28px}}@media (max-width:480px){{.files.list-layout.list-thumbnails .file{{grid-template-columns:52px minmax(0,1fr) 72px}}}}
 </style>
 <h1>多用户共享</h1>
-<details><summary>修改登录密码</summary><form action="/password" method="post"><div class="password-row"><input name="new_password" type="password" minlength="12" placeholder="新密码（至少 12 位）" required><input name="confirm_password" type="password" minlength="12" placeholder="再次输入新密码" required></div><button>更新密码</button><span class=hint>修改后，浏览器会要求使用新密码重新登录。</span></form></details>
+{password_controls}
 <nav class="tabs"><button type="button" class="tab-button active" data-tab="notes">文字</button><button type="button" class="tab-button" data-tab="files">文件</button></nav>
 <section class="tab-panel" id="notes-panel"><h2>备忘录</h2><form action="/notes" method="post"><textarea name="text" placeholder="输入一段共享文字" required></textarea><button>保存为备忘录</button></form><form action="/notes/delete-selected" method="post"><div class="notes-toolbar"><button class="delete" onclick="return confirm(\'确认永久删除所有已选文字？\')">删除所选文字</button></div>{notes_html}</form></section>
 <section class="tab-panel" id="files-panel" hidden><h2>上传文件</h2><form action="/upload" method="post" enctype="multipart/form-data"><input name="file" type="file" multiple required><div class=hint><label>过期时间（分钟，可留空永久保存）：<input name="expires_minutes" type="number" min="1" step="1" placeholder="例如 30"></label></div><button>上传所选文件</button></form><p class=hint>可一次选择多个文件；单个文件最大 {MAX_UPLOAD_MB} MB。过期文件会在下次访问时自动删除。</p><h2>文件</h2><form action="/files/download-zip" method="post"><div class="file-toolbar"><button type="button" class="layout-button active" data-layout="grid">网格</button><button type="button" class="layout-button" data-layout="list">列表</button><button type="button" class="layout-button" id="list-thumbnails" hidden>缩略图：关</button></div><p class=hint>勾选文件后可逐个下载到当前用户的 Download；ZIP 是兼容性备用方案。</p><p><button type="button" id="download-selected">逐个下载所选文件</button> <button>下载 ZIP（备用）</button> <button class="delete" formaction="/files/delete-selected" formmethod="post" onclick="return confirm(\'确认永久删除所有已选文件？\')">删除所选文件</button></p><div id="file-list" class="files"><div class="file-header"><span class="thumb-column"></span><span>名称</span><span>上传时间</span><span>类型</span><span>大小</span></div>{file_list}</div></form></section><script>
@@ -350,6 +354,9 @@ setListThumbnails(localStorage.getItem('multiuser-share-list-thumbnails') === '1
 
     def change_password(self) -> None:
         global PASSWORD
+        if not AUTH_ENABLED:
+            self.send_error(HTTPStatus.BAD_REQUEST, "公开访问模式下不能修改密码")
+            return
         form = self.read_form()
         if form is None:
             return
@@ -363,6 +370,7 @@ setListThumbnails(localStorage.getItem('multiuser-share-list-thumbnails') === '1
             config = "\n".join((
                 f"export SHARE_USERNAME={shlex.quote(USERNAME)}",
                 f"export SHARE_PASSWORD={shlex.quote(password)}",
+                "export SHARE_AUTH_ENABLED=1",
                 f"export SHARE_DATA_DIR={shlex.quote(str(DATA_DIR))}",
                 f"export SHARE_PORT={shlex.quote(str(PORT))}",
                 "",
