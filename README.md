@@ -35,15 +35,10 @@ curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/ma
 pkg update && pkg install python git
 git clone https://github.com/Reisen-U/android-multiuser-share.git
 cd android-multiuser-share
+./setup.sh
 ```
 
-设置登录密码并启动。请换成自己的强密码：
-
-```sh
-export SHARE_USERNAME=share
-export SHARE_PASSWORD='请改成一个长密码'
-python app.py
-```
+`setup.sh` 会询问登录信息、创建启动器并启动服务。
 
 默认数据目录是 `~/multiuser-share`；可改为：
 
@@ -58,16 +53,15 @@ export SHARE_DATA_DIR="$HOME/storage/shared/MultiUserShare"
 若使用一键安装器部署过，仍可用 Git 拉取最新版程序：
 
 ```sh
-pkg install git
+pkg install git python
 git clone https://github.com/Reisen-U/android-multiuser-share.git ~/android-multiuser-share
-cp ~/android-multiuser-share/app.py ~/.local/share/android-multiuser-share/app.py
+cd ~/android-multiuser-share && ./setup.sh
 ```
 
 后续更新：
 
 ```sh
 cd ~/android-multiuser-share && git pull
-cp ~/android-multiuser-share/app.py ~/.local/share/android-multiuser-share/app.py
 ```
 
 更新后重启 `~/.local/bin/multiuser-share` 即可。
