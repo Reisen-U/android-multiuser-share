@@ -17,8 +17,8 @@ pkg update -y
 pkg install -y python curl
 
 echo "==> 安装服务依赖"
-python -m pip install --upgrade pip
-python -m pip install 'Flask>=3.0,<4.0'
+# Termux 由包管理器维护 pip；升级 pip 会被 Termux 拒绝。
+python -m pip install --disable-pip-version-check 'Flask>=3.0,<4.0'
 
 mkdir -p "$APP_DIR" "$BIN_DIR"
 curl -fsSL "$REPO_RAW/app.py" -o "$APP_DIR/app.py"
