@@ -1,12 +1,15 @@
 # Android 多用户共享
 
-一个运行在 Termux 中的小型本地中转站。Android 的两个用户都可通过浏览器上传、下载文件，以及编辑一段共享文字。
+一个运行在 Termux 中的小型本地中转站。Android 的多个用户都可通过浏览器共享备忘录和文件。
 
 ## 特性
 
-- 文件上传与下载
-- 共享文字便签
+- 多文件上传、勾选后逐个下载或下载 ZIP
+- 图片缩略图、网格/列表/列表缩略图三种文件视图
+- 可设置文件在 N 分钟后过期，并支持批量删除
+- 备忘录列表、摘要展开与一键复制
 - HTTP Basic 登录保护
+- 仅使用 Python 标准库，无 Flask、pip 或编译依赖
 - 不依赖云端；数据保存在运行服务的 Termux 用户中
 - 单文件默认上限 512 MB，可调整
 
@@ -30,9 +33,8 @@ curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/ma
 
 ```sh
 pkg update && pkg install python git
-git clone https://github.com/你的用户名/android-multiuser-share.git
+git clone https://github.com/Reisen-U/android-multiuser-share.git
 cd android-multiuser-share
-pip install -r requirements.txt
 ```
 
 设置登录密码并启动。请换成自己的强密码：
@@ -50,6 +52,25 @@ export SHARE_DATA_DIR="$HOME/storage/shared/MultiUserShare"
 ```
 
 > 使用共享存储前先执行一次 `termux-setup-storage`。不要把数据目录提交进 Git。
+
+## 通过 Git 更新
+
+若使用一键安装器部署过，仍可用 Git 拉取最新版程序：
+
+```sh
+pkg install git
+git clone https://github.com/Reisen-U/android-multiuser-share.git ~/android-multiuser-share
+cp ~/android-multiuser-share/app.py ~/.local/share/android-multiuser-share/app.py
+```
+
+后续更新：
+
+```sh
+cd ~/android-multiuser-share && git pull
+cp ~/android-multiuser-share/app.py ~/.local/share/android-multiuser-share/app.py
+```
+
+更新后重启 `~/.local/bin/multiuser-share` 即可。
 
 ## 访问
 
@@ -72,7 +93,7 @@ http://192.168.x.x:8080
 - 服务器会监听局域网，**同一 Wi-Fi 的设备也可能尝试访问**；务必使用强密码，不要在不可信 Wi-Fi 使用。
 - 这是 HTTP 而非 HTTPS，不适合传输高度敏感文件。
 - Termux 后台可能被系统结束。可运行 `termux-wake-lock`，并在 Android 设置中关闭 Termux 的电池优化。
-- 文件重名会覆盖旧文件；发布前若需要，可扩展为版本管理或删除功能。
+- 同名文件会自动加序号，避免覆盖原文件。
 
 ## 配置项
 
