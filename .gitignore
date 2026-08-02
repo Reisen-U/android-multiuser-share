@@ -27,4 +27,4 @@ __pycache__/
 .venv/
 data/
 .env
-参考文件/android-multiuser-share/
+termux原型/android-multiuser-share/
