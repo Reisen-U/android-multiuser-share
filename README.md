@@ -8,12 +8,12 @@
 - 图片缩略图、网格/列表/列表缩略图三种文件视图
 - 可设置文件在 N 分钟后过期，并支持批量删除
 - 备忘录列表、摘要展开与一键复制
-- HTTP Basic 登录保护
-- 仅使用 Python 标准库，无 Flask、pip 或编译依赖
+- 可选的用户名和密码保护
+- 无需额外安装 Python 库
 - 不依赖云端；数据保存在运行服务的 Termux 用户中
 - 单文件默认上限 512 MB，可调整
 
-## 一键安装（可选）
+## 一键安装
 
 在运行服务的那个 Android 用户的 **Termux** 中执行这一行：
 
@@ -21,7 +21,7 @@
 curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/install.sh | bash
 ```
 
-安装器只更新软件包索引并安装 Python；它**不会**进行完整系统升级，也不会在安装过程中升级用于启动安装器的 curl。询问登录用户名与密码后会立即启动服务。以后只需执行：
+安装过程会让你选择是否启用用户名和密码保护；完成后服务会自动启动。以后只需执行：
 
 ```sh
 multiuser-share
@@ -49,7 +49,7 @@ ip route get 1.1.1.1
 http://192.168.x.x:8080
 ```
 
-输入上一步设置的用户名和密码。服务在主用户里运行即可；另一个用户只需浏览器。
+若启用了密码保护，输入安装时设置的用户名和密码。服务在一个 Android 用户的 Termux 中运行；其他用户只需用浏览器访问。
 
 ## 安全与稳定性
 
@@ -57,16 +57,6 @@ http://192.168.x.x:8080
 - 这是 HTTP 而非 HTTPS，不适合传输高度敏感文件。
 - Termux 后台可能被系统结束。可运行 `termux-wake-lock`，并在 Android 设置中关闭 Termux 的电池优化。
 - 同名文件会自动加序号，避免覆盖原文件。
-
-## 配置项
-
-| 环境变量 | 默认值 | 用途 |
-| --- | --- | --- |
-| `SHARE_USERNAME` | `share` | 登录名 |
-| `SHARE_PASSWORD` | 无（必须设置） | 登录密码 |
-| `SHARE_PORT` | `8080` | 监听端口 |
-| `SHARE_MAX_UPLOAD_MB` | `512` | 单文件大小上限 |
-| `SHARE_DATA_DIR` | `~/multiuser-share` | 数据保存位置 |
 
 ## 许可
 
