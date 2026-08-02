@@ -4,7 +4,7 @@ set -eu
 
 REPO_RAW="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main"
 APP_DIR="$HOME/.local/share/android-multiuser-share"
-BIN_DIR="$HOME/.local/bin"
+BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
 CONFIG_FILE="$APP_DIR/config.env"
 
 command -v pkg >/dev/null 2>&1 || {
@@ -71,6 +71,6 @@ chmod 700 "$BIN_DIR/multiuser-share"
 
 echo
 echo "安装完成。服务现在启动；停止请按 Ctrl+C。"
-echo "以后使用：$BIN_DIR/multiuser-share"
+echo "以后只需输入：multiuser-share"
 echo "在另一个 Android 用户访问：http://手机局域网IP:8080"
 exec "$BIN_DIR/multiuser-share"

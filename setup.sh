@@ -4,7 +4,7 @@ set -eu
 
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 STATE_DIR="$HOME/.local/share/android-multiuser-share"
-BIN_DIR="$HOME/.local/bin"
+BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
 CONFIG_FILE="$STATE_DIR/config.env"
 
 command -v python >/dev/null 2>&1 || {
@@ -58,5 +58,6 @@ exec python "$APP_DIR/app.py"
 EOF
 chmod 700 "$BIN_DIR/multiuser-share"
 
-echo "配置完成。以后更新：cd $APP_DIR && git pull"
+echo "配置完成。以后启动只需输入：multiuser-share"
+echo "以后更新：cd $APP_DIR && git pull"
 exec "$BIN_DIR/multiuser-share"

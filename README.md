@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/ma
 安装器只更新软件包索引并安装 Python；它**不会**进行完整系统升级，也不会在安装过程中升级用于启动安装器的 curl。询问登录用户名与密码后会立即启动服务。以后只需执行：
 
 ```sh
-~/.local/bin/multiuser-share
+multiuser-share
 ```
 
 ## 新设备首次安装（推荐，最稳妥）
@@ -102,7 +102,7 @@ export SHARE_DATA_DIR="$HOME/storage/shared/MultiUserShare"
 日后启动服务：
 
 ```sh
-~/.local/bin/multiuser-share
+multiuser-share
 ```
 
 后续更新：
@@ -111,7 +111,7 @@ export SHARE_DATA_DIR="$HOME/storage/shared/MultiUserShare"
 cd ~/android-multiuser-share && git pull
 ```
 
-更新后重启 `~/.local/bin/multiuser-share` 即可。
+更新后重启 `multiuser-share` 即可。
 
 ## 访问
 
