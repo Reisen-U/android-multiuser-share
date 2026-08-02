@@ -14,8 +14,9 @@ command -v pkg >/dev/null 2>&1 || {
 
 echo "==> 安装 Python 与 curl"
 pkg update -y
-# 避免只升级 curl 的部分依赖，导致本地 TLS 动态库版本不匹配。
-pkg upgrade -y
+# 这里绝不能执行 `pkg upgrade`：一键安装通常通过 `curl | bash` 运行，
+# 而完整升级可能要求用户选择保留哪个配置文件。dpkg 若从管道读取该回答，
+# 会读到脚本内容或 EOF，进而中断安装。系统升级请在 Termux 中单独执行。
 pkg install -y python curl
 
 mkdir -p "$APP_DIR" "$BIN_DIR"

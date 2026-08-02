@@ -13,7 +13,7 @@
 - 不依赖云端；数据保存在运行服务的 Termux 用户中
 - 单文件默认上限 512 MB，可调整
 
-## 一键安装（推荐）
+## 一键安装（可选）
 
 在运行服务的那个 Android 用户的 **Termux** 中执行这一行：
 
@@ -21,13 +21,13 @@
 curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/install.sh | bash
 ```
 
-安装器会自动安装 Python 和依赖，询问登录用户名与密码，然后立即启动服务。以后只需执行：
+安装器只更新软件包索引并安装 Python、curl；它**不会**进行完整系统升级，因此不会在管道安装中卡在 Termux 的配置文件询问。询问登录用户名与密码后会立即启动服务。以后只需执行：
 
 ```sh
 ~/.local/bin/multiuser-share
 ```
 
-## 新设备首次安装（分步）
+## 新设备首次安装（推荐，最稳妥）
 
 在要运行服务器的 Android 用户中打开 Termux。每一步完成并重新出现 `~ $` 提示符后，再进行下一步。
 
