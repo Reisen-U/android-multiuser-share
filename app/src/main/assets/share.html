@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>多用户共享</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f5f7; color: #17212b; }
+    header { position: sticky; top: 0; z-index: 5; padding: 15px 16px; background: #0d47a1; color: #fff; box-shadow: 0 1px 4px #0003; }
+    header strong { font-size: 19px; }
+    header small { display: block; margin-top: 3px; color: #dbe8ff; }
+    main { width: min(920px, 100%); margin: 0 auto; padding: 14px; }
+    button, .button { min-height: 40px; border: 0; border-radius: 6px; padding: 9px 13px; background: #1565c0; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: default; }
+    button.secondary, .button.secondary { background: #e5ebf2; color: #17212b; }
+    button.danger { background: #b3261e; }
+    .tabs, .toolbar, .view-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tabs { margin-bottom: 12px; }
+    .tabs button { flex: 1; background: #dce6f2; color: #243447; }
+    .tabs button.active { background: #0d47a1; color: #fff; }
+    .panel { padding: 14px; border: 1px solid #dce2e8; border-radius: 8px; background: #fff; }
+    .panel[hidden] { display: none; }
+    textarea { width: 100%; min-height: 112px; resize: vertical; border: 1px solid #aeb9c4; border-radius: 6px; padding: 10px; font: inherit; }
+    input[type="number"] { width: 120px; padding: 8px; border: 1px solid #aeb9c4; border-radius: 5px; font: inherit; }
+    input[type="file"][hidden] { display: none; }
+    .toolbar { margin: 10px 0 14px; }
+    .view-controls { margin-left: auto; flex-wrap: nowrap; }
+    .view-controls button.active { background: #0d47a1; }
+    .message { min-height: 24px; margin: 8px 0; color: #415365; font-size: 14px; }
+    .message.error { color: #b3261e; }
+    .warning { margin-bottom: 12px; padding: 10px; border: 1px solid #f1cb6c; border-radius: 6px; background: #fff4d6; color: #624b00; }
+    .empty { padding: 28px 8px; text-align: center; color: #71808e; }
+    .note { margin-top: 10px; padding: 12px; border: 1px solid #dfe5ea; border-radius: 7px; }
+    .note-actions, .file-meta { display: flex; gap: 8px; align-items: center; }
+    .note-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; }
+    .note h3 { display: -webkit-box; min-width: 0; margin: 0; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 16px; }
+    .note-select, .selection-toggle { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+    .note-select { padding-top: 2px; }
+    .selection-toggle { min-height: 36px; color: #344658; font-size: 14px; }
+    .note-summary, .note-full { margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .note-summary { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; color: #3d4c59; }
+    .note-footer { color: #71808e; font-size: 13px; }
+    .note-actions { margin-top: 9px; }
+    .note-actions button { min-height: 34px; padding: 6px 10px; }
+    .file-controls { display: grid; gap: 8px; margin: 4px 0 14px; }
+    .file-picker, .expiry-control, .file-upload-row, .file-bulk-actions, .file-layout-actions, .file-display-options { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .file-picker { min-width: 0; }
+    .file-picker-name { max-width: min(360px, 70vw); overflow: hidden; color: #536473; text-overflow: ellipsis; white-space: nowrap; }
+    .expiry-control { color: #344658; }
+    .expiry-control input { width: 86px; }
+    .file-primary-button { width: 92px; min-width: 92px; }
+    .file-bulk-actions button { white-space: nowrap; }
+    .file-layout-actions .view-controls { margin-left: auto; }
+    .file-display-options { gap: 14px; }
+    .icon-button { display: grid; width: 44px; min-width: 44px; padding: 0; place-items: center; color: #59636c; font-size: 28px; line-height: 1; }
+    .icon-button.active { color: #fff; }
+    .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .file-groups { display: grid; gap: 14px; }
+    .file-group { min-width: 0; overflow: hidden; border: 1px solid #d9e0e6; border-radius: 7px; background: #f8fafb; }
+    .file-group-header { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #dfe5ea; background: #eaf0f6; color: #2d4053; font-weight: 700; }
+    .file-group-items { padding: 10px; }
+    .files-grid .file-card { display: grid; grid-template-columns: 26px minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid #dfe5ea; border-radius: 7px; background: #fff; }
+    .files-grid .preview-link { grid-column: 1 / -1; grid-row: 1; }
+    .files-grid .preview { width: 100%; height: 118px; border-bottom: 1px solid #e3e8ed; object-fit: cover; }
+    .files-grid .file-check { grid-column: 1; grid-row: 2; margin: 13px 0 0 9px; }
+    .files-grid .file-body { grid-column: 2; grid-row: 2; min-width: 0; padding: 9px 9px 11px 3px; }
+    .files-grid.no-thumbnails .preview-link { display: none; }
+    .files-grid.no-thumbnails .file-check { grid-row: 1; }
+    .files-grid.no-thumbnails .file-body { grid-row: 1; }
+    .files-list .file-card { display: grid; grid-template-columns: 26px 38px minmax(0, 1fr); gap: 8px; align-items: center; min-height: 50px; border-bottom: 1px solid #e6ebef; }
+    .files-list .file-check { grid-column: 1; }
+    .files-list .preview-link { grid-column: 2; }
+    .files-list .file-body { grid-column: 3; }
+    .preview-link { display: block; min-width: 0; line-height: 0; }
+    .files-list .preview { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; }
+    .files-list .file-body { min-width: 0; }
+    .files-list.no-thumbnails .file-card { grid-template-columns: 26px minmax(0, 1fr); }
+    .files-list.no-thumbnails .preview-link { display: none; }
+    .files-list.no-thumbnails .file-body { grid-column: 2; }
+    .file-icon { display: grid; place-items: center; background: #e8edf2; color: #516171; font-size: 12px; font-weight: 700; }
+    .filename { display: block; overflow: hidden; color: #1458a4; font-weight: 600; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+    .files-grid .filename { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; }
+    .file-meta { margin-top: 3px; color: #71808e; font-size: 12px; }
+    @media (max-width: 560px) {
+      .file-upload-row { flex-wrap: nowrap; }
+      .file-bulk-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      .file-bulk-actions button { min-width: 0; padding: 8px 5px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>多用户共享</strong>
+    <small id="authState">正在连接服务...</small>
+  </header>
+  <main>
+    <div id="publicWarning" class="warning" hidden>当前为公开访问，同一 Wi-Fi 的设备也可以访问。请勿传输高度敏感内容。</div>
+    <nav class="tabs" aria-label="内容类型">
+      <button id="textTab" class="active" type="button">文本</button>
+      <button id="filesTab" type="button">文件</button>
+    </nav>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <section id="textPanel" class="panel">
+      <textarea id="noteText" placeholder="输入要共享的文本"></textarea>
+      <div class="toolbar">
+        <button id="saveNote" type="button">保存文本</button>
+        <button id="deleteNotes" class="danger" type="button">删除所选</button>
+        <label class="selection-toggle"><input id="selectAllNotes" type="checkbox"> 全选</label>
+      </div>
+      <div id="notes"></div>
+    </section>
+
+    <section id="filesPanel" class="panel" hidden>
+      <div class="file-controls">
+        <div class="file-picker">
+          <input id="fileInput" type="file" multiple hidden>
+          <button id="chooseFiles" class="secondary file-primary-button" type="button">选择文件</button>
+          <span id="fileSelection" class="file-picker-name">未选择文件</span>
+        </div>
+        <div class="file-upload-row">
+          <button id="uploadFiles" class="file-primary-button" type="button">上传文件</button>
+          <label class="expiry-control">过期时间 <input id="expiry" type="number" min="1" placeholder="分钟" aria-label="过期时间（分钟）"></label>
+        </div>
+        <div class="file-bulk-actions">
+          <button id="selectAllFiles" class="secondary" type="button">全选</button>
+          <button id="clearFileSelection" class="secondary" type="button">取消选中</button>
+          <button id="downloadFiles" class="secondary" type="button">逐个下载</button>
+          <button id="downloadZip" class="secondary" type="button">打包下载</button>
+        </div>
+        <div class="file-layout-actions">
+          <button id="deleteFiles" class="danger" type="button">删除所选</button>
+          <span class="view-controls" aria-label="文件显示方式">
+            <button id="gridView" class="secondary icon-button" type="button" title="网格视图" aria-label="网格视图"><span aria-hidden="true">▦</span></button>
+            <button id="listView" class="secondary icon-button" type="button" title="列表视图" aria-label="列表视图"><span aria-hidden="true">☰</span></button>
+          </span>
+        </div>
+        <div class="file-display-options">
+          <label class="selection-toggle"><input id="groupFiles" type="checkbox"> 按上传时间分组</label>
+          <label class="selection-toggle"><input id="showThumbnails" type="checkbox"> 显示缩略图</label>
+        </div>
+      </div>
+      <div id="files"></div>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+    const byId = id => document.getElementById(id);
+    let state = { notes: [], files: [] };
+    let viewMode = localStorage.getItem("share-view") || "grid";
+    let showThumbnails = localStorage.getItem("share-thumbnails") !== "0";
+    let groupFilesByBatch = localStorage.getItem("share-group-files") === "1";
+    let selectedFileNames = new Set();
+
+    function setMessage(text, error) {
+      const message = byId("message");
+      message.textContent = text || "";
+      message.classList.toggle("error", Boolean(error));
+    }
+
+    async function request(url, options) {
+      const response = await fetch(url, options || {});
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || ("请求失败：" + response.status));
+      }
+      const type = response.headers.get("content-type") || "";
+      return type.includes("application/json") ? response.json() : response;
+    }
+
+    async function run(button, busyText, task) {
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = busyText;
+      setMessage("");
+      try {
+        await task();
+      } catch (error) {
+        setMessage(error.message || "操作失败", true);
+      } finally {
+        button.disabled = false;
+        button.textContent = original;
+      }
+    }
+
+    async function refresh() {
+      state = await request("/api/state");
+      byId("authState").textContent = state.auth ? "密码保护已启用" : "公开访问";
+      byId("publicWarning").hidden = Boolean(state.auth);
+      renderNotes();
+      renderFiles();
+    }
+
+    function showTab(tab) {
+      const text = tab === "text";
+      byId("textPanel").hidden = !text;
+      byId("filesPanel").hidden = text;
+      byId("textTab").classList.toggle("active", text);
+      byId("filesTab").classList.toggle("active", !text);
+    }
+
+    function renderNotes() {
+      const host = byId("notes");
+      host.replaceChildren();
+      byId("selectAllNotes").checked = false;
+      byId("selectAllNotes").indeterminate = false;
+      byId("selectAllNotes").disabled = state.notes.length === 0;
+      if (!state.notes.length) {
+        host.append(empty("暂无文本"));
+        return;
+      }
+      state.notes.forEach(note => {
+        const text = String(note.text || "");
+        const lines = text.split(/\r?\n/);
+        const card = element("article", "note");
+        const head = element("div", "note-head");
+        const title = element("h3", "", lines[0].trim() || "无标题文本");
+        const selectLabel = element("label", "note-select");
+        const checkbox = element("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "note-check";
+        checkbox.value = note.id;
+        selectLabel.append(checkbox, document.createTextNode(" 选择"));
+        head.append(title, selectLabel);
+
+        const summary = element("p", "note-summary", lines.slice(1).join("\n").trim() || text);
+        const full = element("p", "note-full", text);
+        full.hidden = true;
+        const footer = element("div", "note-footer", text.length + " 字 · " + formatTime(note.createdAt));
+        const actions = element("div", "note-actions");
+        const copy = button("复制", () => copyText(text));
+        const expand = button("展开全文", () => {
+          full.hidden = !full.hidden;
+          summary.hidden = !full.hidden;
+          expand.textContent = full.hidden ? "展开全文" : "收起全文";
+        });
+        actions.append(copy, expand);
+        card.append(head, summary, full, footer, actions);
+        host.append(card);
+      });
+    }
+
+    function renderFiles() {
+      const host = byId("files");
+      host.replaceChildren();
+      byId("gridView").classList.toggle("active", viewMode === "grid");
+      byId("listView").classList.toggle("active", viewMode === "list");
+      byId("showThumbnails").checked = showThumbnails;
+      byId("groupFiles").checked = groupFilesByBatch;
+      const availableNames = new Set(state.files.map(file => file.name));
+      selectedFileNames = new Set(Array.from(selectedFileNames).filter(name => availableNames.has(name)));
+      if (!state.files.length) {
+        host.className = "";
+        host.append(empty("暂无文件"));
+        syncFileSelectionControls();
+        return;
+      }
+      if (groupFilesByBatch) {
+        host.className = "file-groups";
+        collectFileGroups(state.files).forEach(group => host.append(renderFileGroup(group)));
+      } else {
+        host.className = fileLayoutClass();
+        state.files.forEach(file => host.append(renderFileCard(file)));
+      }
+      syncFileSelectionControls();
+    }
+
+    function fileLayoutClass(extra) {
+      const layout = (viewMode === "grid" ? "files-grid" : "files-list") + (showThumbnails ? "" : " no-thumbnails");
+      return extra ? extra + " " + layout : layout;
+    }
+
+    function fileBatchKey(file) {
+      if (file.batchId) return String(file.batchId);
+      const date = new Date(file.batchCreatedAt || file.createdAt);
+      if (Number.isNaN(date.getTime())) return "legacy-" + file.name;
+      date.setSeconds(0, 0);
+      return "legacy-" + date.toISOString();
+    }
+
+    function collectFileGroups(files) {
+      const groups = new Map();
+      files.forEach(file => {
+        const key = fileBatchKey(file);
+        if (!groups.has(key)) groups.set(key, { key, time: file.batchCreatedAt || file.createdAt, files: [] });
+        groups.get(key).files.push(file);
+      });
+      return Array.from(groups.values());
+    }
+
+    function renderFileGroup(group) {
+      const section = element("section", "file-group");
+      const header = element("label", "file-group-header");
+      const checkbox = element("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "file-group-check";
+      checkbox.dataset.batchId = group.key;
+      header.append(checkbox, document.createTextNode("上传于 " + formatTime(group.time, false) + " · " + group.files.length + " 个文件"));
+      const items = element("div", fileLayoutClass("file-group-items"));
+      group.files.forEach(file => items.append(renderFileCard(file, group.key)));
+      section.append(header, items);
+      return section;
+    }
+
+    function renderFileCard(file, explicitBatchKey) {
+      const batchKey = explicitBatchKey || fileBatchKey(file);
+      const card = element("article", "file-card");
+      const checkbox = element("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "file-check";
+      checkbox.value = file.name;
+      checkbox.dataset.batchId = batchKey;
+      checkbox.checked = selectedFileNames.has(file.name);
+
+      let preview;
+      if (String(file.mime || "").startsWith("image/")) {
+        preview = element("img", "preview");
+        preview.loading = "lazy";
+        preview.alt = "";
+        preview.src = "/preview?name=" + encodeURIComponent(file.name);
+      } else {
+        preview = element("div", "preview file-icon", "FILE");
+      }
+      const previewLink = element("a", "preview-link");
+      previewLink.href = "/preview?name=" + encodeURIComponent(file.name);
+      previewLink.target = "_blank";
+      previewLink.rel = "noopener";
+      previewLink.title = "预览 " + file.name;
+      previewLink.append(preview);
+
+      const body = element("div", "file-body");
+      const name = element("a", "filename", file.name);
+      name.href = "/download?name=" + encodeURIComponent(file.name);
+      const details = formatSize(Number(file.size || 0)) + (file.expiresAt ? " · " + formatTime(file.expiresAt) + " 过期" : "");
+      body.append(name, element("div", "file-meta", details));
+      card.append(checkbox, previewLink, body);
+      return card;
+    }
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+
+    function button(label, action) {
+      const node = element("button", "secondary", label);
+      node.type = "button";
+      node.addEventListener("click", action);
+      return node;
+    }
+
+    function empty(text) { return element("div", "empty", text); }
+    function selected(selector) { return Array.from(document.querySelectorAll(selector + ":checked"), node => node.value); }
+    function syncNoteSelectionControls() {
+      const items = Array.from(document.querySelectorAll(".note-check"));
+      const selectedCount = items.filter(item => item.checked).length;
+      const master = byId("selectAllNotes");
+      master.disabled = items.length === 0;
+      master.checked = items.length > 0 && selectedCount === items.length;
+      master.indeterminate = selectedCount > 0 && selectedCount < items.length;
+    }
+    function syncFileSelectionControls() {
+      const items = Array.from(document.querySelectorAll(".file-check"));
+      const selectedCount = items.filter(item => item.checked).length;
+      byId("selectAllFiles").disabled = items.length === 0 || selectedCount === items.length;
+      byId("clearFileSelection").disabled = selectedCount === 0;
+      document.querySelectorAll(".file-group-check").forEach(group => {
+        const members = items.filter(item => item.dataset.batchId === group.dataset.batchId);
+        const groupSelected = members.filter(item => item.checked).length;
+        group.checked = members.length > 0 && groupSelected === members.length;
+        group.indeterminate = groupSelected > 0 && groupSelected < members.length;
+      });
+    }
+    function delay(milliseconds) { return new Promise(resolve => setTimeout(resolve, milliseconds)); }
+    function formatTime(value, includeSeconds) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "刚刚";
+      const options = { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" };
+      if (includeSeconds !== false) options.second = "2-digit";
+      return new Intl.DateTimeFormat("zh-CN", options).format(date);
+    }
+    function formatSize(bytes) {
+      const units = ["B", "KB", "MB", "GB"];
+      let index = 0;
+      while (bytes >= 1024 && index < units.length - 1) { bytes /= 1024; index++; }
+      return (index ? bytes.toFixed(1) : Math.round(bytes)) + " " + units[index];
+    }
+
+    async function copyText(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(text);
+        else {
+          const area = element("textarea");
+          area.value = text;
+          area.style.position = "fixed";
+          area.style.opacity = "0";
+          document.body.append(area);
+          area.select();
+          document.execCommand("copy");
+          area.remove();
+        }
+        setMessage("已复制");
+      } catch (error) {
+        setMessage("复制失败，请长按文本复制", true);
+      }
+    }
+
+    byId("textTab").addEventListener("click", () => showTab("text"));
+    byId("filesTab").addEventListener("click", () => showTab("files"));
+    byId("selectAllNotes").addEventListener("change", event => {
+      document.querySelectorAll(".note-check").forEach(item => { item.checked = event.currentTarget.checked; });
+      syncNoteSelectionControls();
+    });
+    byId("notes").addEventListener("change", event => {
+      if (event.target.matches(".note-check")) syncNoteSelectionControls();
+    });
+    byId("chooseFiles").addEventListener("click", () => byId("fileInput").click());
+    byId("fileInput").addEventListener("change", () => {
+      const files = Array.from(byId("fileInput").files || []);
+      byId("fileSelection").textContent = files.length === 0 ? "未选择文件" : "选择了 " + files.length + " 个文件";
+    });
+    byId("gridView").addEventListener("click", () => { viewMode = "grid"; localStorage.setItem("share-view", viewMode); renderFiles(); });
+    byId("listView").addEventListener("click", () => { viewMode = "list"; localStorage.setItem("share-view", viewMode); renderFiles(); });
+    byId("showThumbnails").addEventListener("change", event => {
+      showThumbnails = event.currentTarget.checked;
+      localStorage.setItem("share-thumbnails", showThumbnails ? "1" : "0");
+      renderFiles();
+    });
+    byId("groupFiles").addEventListener("change", event => {
+      groupFilesByBatch = event.currentTarget.checked;
+      localStorage.setItem("share-group-files", groupFilesByBatch ? "1" : "0");
+      renderFiles();
+    });
+    byId("selectAllFiles").addEventListener("click", () => {
+      selectedFileNames = new Set(state.files.map(file => file.name));
+      document.querySelectorAll(".file-check").forEach(item => { item.checked = true; });
+      syncFileSelectionControls();
+    });
+    byId("clearFileSelection").addEventListener("click", () => {
+      selectedFileNames = new Set();
+      document.querySelectorAll(".file-check").forEach(item => { item.checked = false; });
+      syncFileSelectionControls();
+    });
+    byId("files").addEventListener("change", event => {
+      if (event.target.matches(".file-group-check")) {
+        const checked = event.target.checked;
+        document.querySelectorAll(".file-check").forEach(item => {
+          if (item.dataset.batchId === event.target.dataset.batchId) {
+            item.checked = checked;
+            if (checked) selectedFileNames.add(item.value); else selectedFileNames.delete(item.value);
+          }
+        });
+      } else if (event.target.matches(".file-check")) {
+        if (event.target.checked) selectedFileNames.add(event.target.value); else selectedFileNames.delete(event.target.value);
+      }
+      syncFileSelectionControls();
+    });
+
+    byId("saveNote").addEventListener("click", event => run(event.currentTarget, "保存中...", async () => {
+      const text = byId("noteText").value;
+      if (!text.trim()) throw new Error("请输入要保存的文本");
+      await request("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+      byId("noteText").value = "";
+      await refresh();
+      setMessage("文本已保存");
+    }));
+
+    byId("deleteNotes").addEventListener("click", event => run(event.currentTarget, "删除中...", async () => {
+      const ids = selected(".note-check");
+      if (!ids.length) throw new Error("请先选择文本");
+      if (!confirm("确定删除所选文本？")) return;
+      await request("/api/notes/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
+      await refresh();
+      setMessage("所选文本已删除");
+    }));
+
+    byId("uploadFiles").addEventListener("click", event => run(event.currentTarget, "上传中...", async () => {
+      const files = Array.from(byId("fileInput").files || []);
+      if (!files.length) throw new Error("请先选择文件");
+      const tooLarge = files.find(file => file.size > 512 * 1024 * 1024);
+      if (tooLarge) throw new Error(tooLarge.name + " 超过 512 MB");
+      const data = new FormData();
+      const expiry = byId("expiry").value;
+      if (expiry) data.append("expiry", expiry);
+      files.forEach(file => data.append("files", file));
+      const result = await request("/api/files/upload", { method: "POST", body: data });
+      byId("fileInput").value = "";
+      byId("fileSelection").textContent = "未选择文件";
+      await refresh();
+      setMessage("已上传 " + result.saved + " 个文件");
+    }));
+
+    byId("downloadFiles").addEventListener("click", event => run(event.currentTarget, "准备中...", async () => {
+      const names = selected(".file-check");
+      if (!names.length) throw new Error("请先选择文件");
+      for (const name of names) {
+        const link = element("a");
+        link.href = "/download?name=" + encodeURIComponent(name);
+        link.download = name;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        await delay(350);
+      }
+      setMessage("已触发 " + names.length + " 个下载");
+    }));
+
+    byId("downloadZip").addEventListener("click", event => run(event.currentTarget, "打包中...", async () => {
+      const names = selected(".file-check");
+      if (!names.length) throw new Error("请先选择文件");
+      const response = await request("/api/files/zip", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ names }) });
+      const blob = await response.blob();
+      const link = element("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "shared-files.zip";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }));
+
+    byId("deleteFiles").addEventListener("click", event => run(event.currentTarget, "删除中...", async () => {
+      const names = selected(".file-check");
+      if (!names.length) throw new Error("请先选择文件");
+      if (!confirm("确定删除所选文件？")) return;
+      await request("/api/files/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ names }) });
+      await refresh();
+      setMessage("所选文件已删除");
+    }));
+
+    refresh().catch(error => setMessage(error.message || "无法连接共享服务", true));
+  </script>
+</body>
+</html>

@@ -1,6 +1,30 @@
+# Android Studio and Gradle
+.gradle/
+.idea/
+*.iml
+local.properties
+build/
+app/build/
+.externalNativeBuild/
+.cxx/
+captures/
+
+# Generated packages and signing material
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# OS and temporary files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Python and Termux runtime artifacts
 __pycache__/
 *.py[cod]
 .venv/
 data/
 .env
-lan-install.sh
+参考文件/android-multiuser-share/
