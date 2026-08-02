@@ -21,7 +21,7 @@
 curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/install.sh | bash
 ```
 
-安装器只更新软件包索引并安装 Python、curl；它**不会**进行完整系统升级，因此不会在管道安装中卡在 Termux 的配置文件询问。询问登录用户名与密码后会立即启动服务。以后只需执行：
+安装器只更新软件包索引并安装 Python；它**不会**进行完整系统升级，也不会在安装过程中升级用于启动安装器的 curl。询问登录用户名与密码后会立即启动服务。以后只需执行：
 
 ```sh
 ~/.local/bin/multiuser-share

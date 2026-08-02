@@ -12,15 +12,15 @@ command -v pkg >/dev/null 2>&1 || {
   exit 1
 }
 
-echo "==> 安装 Python 与 curl"
+echo "==> 安装 Python"
 pkg update -y
-# 这里绝不能执行 `pkg upgrade`：一键安装通常通过 `curl | bash` 运行，
-# 而完整升级可能要求用户选择保留哪个配置文件。dpkg 若从管道读取该回答，
-# 会读到脚本内容或 EOF，进而中断安装。系统升级请在 Termux 中单独执行。
-pkg install -y python curl
+# 不要在这里升级 curl：全新 Termux 的 curl 已用于下载本脚本，而升级它可能
+# 引入与预装 OpenSSL/QUIC 库不匹配的版本。完整系统升级请单独在 Termux 中执行。
+pkg install -y python
 
 mkdir -p "$APP_DIR" "$BIN_DIR"
-curl -fsSL "$REPO_RAW/app.py" -o "$APP_DIR/app.py"
+python -c 'from urllib.request import urlretrieve; import sys; urlretrieve(sys.argv[1], sys.argv[2])' \
+  "$REPO_RAW/app.py" "$APP_DIR/app.py"
 
 read -r -p "启用用户名密码保护？[Y/n] " SHARE_AUTH_REPLY </dev/tty
 case "${SHARE_AUTH_REPLY:-Y}" in
