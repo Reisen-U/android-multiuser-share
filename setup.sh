@@ -55,7 +55,7 @@ set -eu
 RAW_APP="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/app.py"
 if [ "\${1:-}" = "update" ]; then
   echo "==> 正在更新多用户共享"
-  python -c 'from urllib.request import urlretrieve; import sys; urlretrieve(sys.argv[1], sys.argv[2])' "\$RAW_APP" "$APP_DIR/app.py.new"
+  python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "\$RAW_APP" "$APP_DIR/app.py.new"
   mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
   echo "更新完成，正在启动服务。"
 fi

@@ -19,8 +19,10 @@ pkg update -y
 pkg install -y python
 
 mkdir -p "$APP_DIR" "$BIN_DIR"
-python -c 'from urllib.request import urlretrieve; import sys; urlretrieve(sys.argv[1], sys.argv[2])' \
-  "$REPO_RAW/app.py" "$APP_DIR/app.py"
+echo "==> 下载服务程序"
+python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' \
+  "$REPO_RAW/app.py" "$APP_DIR/app.py.new"
+mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
 
 if [ -f "$CONFIG_FILE" ]; then
   echo "检测到已有安装：保留登录设置和共享数据。"
@@ -67,7 +69,7 @@ APP_DIR="$HOME/.local/share/android-multiuser-share"
 RAW_APP="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/app.py"
 if [ "${1:-}" = "update" ]; then
   echo "==> 正在更新多用户共享"
-  python -c 'from urllib.request import urlretrieve; import sys; urlretrieve(sys.argv[1], sys.argv[2])' "$RAW_APP" "$APP_DIR/app.py.new"
+  python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "$RAW_APP" "$APP_DIR/app.py.new"
   mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
   echo "更新完成，正在启动服务。"
 fi
