@@ -1,4 +1,4 @@
-"""Android 多用户之间使用的本地文件、备忘录中转站（仅 Python 标准库）。"""
+"""Android 多用户之间使用的本地文本、文件中转站（仅 Python 标准库）。"""
 
 import base64
 import hmac
@@ -63,7 +63,7 @@ def save_json(path: Path, value) -> None:
 
 def load_notes() -> list:
     notes = load_json(NOTES_FILE, [])
-    # 兼容原型版：把唯一的一段共享文字迁移成第一条备忘录。
+    # 兼容原型版：把唯一保存的一段文本迁移成第一条文本。
     if LEGACY_NOTE_FILE.exists():
         text = LEGACY_NOTE_FILE.read_text(encoding="utf-8").strip()
         if text:
@@ -229,12 +229,12 @@ class ShareHandler(BaseHTTPRequestHandler):
         for note in notes:
             text = str(note.get("text", ""))
             lines = text.splitlines() or [text]
-            title = lines[0].strip() or "无标题备忘录"
+            title = lines[0].strip() or "无标题文本"
             summary = "\n".join(lines[1:]).strip() or title
             note_cards.append(
                 f'<article class="note"><span class="note-full" hidden>{html.escape(text)}</span><div class="note-head"><strong class="note-title">{html.escape(title)}</strong><button type="button" class="copy-note">复制</button></div><div class="note-text note-summary">{html.escape(summary)}</div><div class="note-footer"><span>{len(text)} 字 · {html.escape(format_created(note.get("created_at")))}</span><button type="button" class="quiet expand-note">展开全文</button></div><label class="note-select"><input type="checkbox" name="notes" value="{html.escape(note.get("id", ""), quote=True)}"> 选择</label></article>'
             )
-        notes_html = "".join(note_cards) or "<p class=empty>暂无备忘录</p>"
+        notes_html = "".join(note_cards) or "<p class=empty>暂无文本</p>"
 
         metadata = clean_expired_files()
         files_html = []
@@ -259,8 +259,8 @@ body{{max-width:760px;margin:24px auto;padding:0 16px;font:16px system-ui;color:
 </style>
 <h1>多用户共享</h1>
 {password_controls}
-<nav class="tabs"><button type="button" class="tab-button active" data-tab="notes">文字</button><button type="button" class="tab-button" data-tab="files">文件</button></nav>
-<section class="tab-panel" id="notes-panel"><h2>备忘录</h2><form action="/notes" method="post"><textarea name="text" placeholder="输入一段共享文字" required></textarea><button>保存为备忘录</button></form><form action="/notes/delete-selected" method="post"><div class="notes-toolbar"><button class="delete" onclick="return confirm(\'确认永久删除所有已选文字？\')">删除所选文字</button></div>{notes_html}</form></section>
+<nav class="tabs"><button type="button" class="tab-button active" data-tab="notes">文本</button><button type="button" class="tab-button" data-tab="files">文件</button></nav>
+<section class="tab-panel" id="notes-panel"><h2>共享文本</h2><form action="/notes" method="post"><textarea name="text" placeholder="输入一段共享文本" required></textarea><button>保存文本</button></form><form action="/notes/delete-selected" method="post"><div class="notes-toolbar"><button class="delete" onclick="return confirm(\'确认永久删除所有已选文本？\')">删除所选文本</button></div>{notes_html}</form></section>
 <section class="tab-panel" id="files-panel" hidden><h2>上传文件</h2><form action="/upload" method="post" enctype="multipart/form-data"><input name="file" type="file" multiple required><div class=hint><label>过期时间（分钟，可留空永久保存）：<input name="expires_minutes" type="number" min="1" step="1" placeholder="例如 30"></label></div><button>上传所选文件</button></form><p class=hint>可一次选择多个文件；单个文件最大 {MAX_UPLOAD_MB} MB。过期文件会在下次访问时自动删除。</p><h2>文件</h2><form action="/files/download-zip" method="post"><div class="file-toolbar"><button type="button" class="layout-button active" data-layout="grid">网格</button><button type="button" class="layout-button" data-layout="list">列表</button><button type="button" class="layout-button" id="list-thumbnails" hidden>缩略图：关</button></div><p class=hint>勾选文件后可逐个下载到当前用户的 Download；ZIP 是兼容性备用方案。</p><p><button type="button" id="download-selected">逐个下载所选文件</button> <button>下载 ZIP（备用）</button> <button class="delete" formaction="/files/delete-selected" formmethod="post" onclick="return confirm(\'确认永久删除所有已选文件？\')">删除所选文件</button></p><div id="file-list" class="files"><div class="file-header"><span class="thumb-column"></span><span>名称</span><span>上传时间</span><span>类型</span><span>大小</span></div>{file_list}</div></form></section><script>
 document.getElementById('download-selected').addEventListener('click', () => {{
   const chosen = [...document.querySelectorAll('input[name="files"]:checked')];
