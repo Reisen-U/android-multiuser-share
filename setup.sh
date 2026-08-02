@@ -52,12 +52,19 @@ chmod 600 "$CONFIG_FILE"
 cat > "$BIN_DIR/multiuser-share" <<EOF
 #!/data/data/com.termux/files/usr/bin/bash
 set -eu
+RAW_APP="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/app.py"
+if [ "\${1:-}" = "update" ]; then
+  echo "==> 正在更新多用户共享"
+  python -c 'from urllib.request import urlretrieve; import sys; urlretrieve(sys.argv[1], sys.argv[2])' "\$RAW_APP" "$APP_DIR/app.py.new"
+  mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
+  echo "更新完成，正在启动服务。"
+fi
 . "$CONFIG_FILE"
 command -v termux-wake-lock >/dev/null 2>&1 && termux-wake-lock || true
 exec python "$APP_DIR/app.py"
 EOF
 chmod 700 "$BIN_DIR/multiuser-share"
 
-echo "配置完成。以后启动只需输入：multiuser-share"
-echo "以后更新：cd $APP_DIR && git pull"
+echo "配置完成。以后启动：multiuser-share"
+echo "以后更新：multiuser-share update"
 exec "$BIN_DIR/multiuser-share"
