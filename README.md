@@ -27,91 +27,13 @@ curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/ma
 multiuser-share
 ```
 
-## 新设备首次安装（推荐，最稳妥）
-
-在要运行服务器的 Android 用户中打开 Termux。每一步完成并重新出现 `~ $` 提示符后，再进行下一步。
-
-### 1. 更新软件源
-
-```sh
-pkg update
-```
-
-首次使用时，Termux 可能测试并选择镜像源，属于正常现象。
-
-### 2. 安装 Git
-
-```sh
-pkg install git
-```
-
-如果询问是否继续，输入 `y`。
-
-### 3. 安装 Python
-
-```sh
-pkg install python
-```
-
-如果询问是否继续，输入 `y`。
-
-### 4. 下载项目
-
-```sh
-git clone https://github.com/Reisen-U/android-multiuser-share.git ~/android-multiuser-share
-```
-
-### 5. 进入项目目录
-
-```sh
-cd ~/android-multiuser-share
-```
-
-### 6. 首次配置并启动
-
-```sh
-bash setup.sh
-```
-
-脚本会询问登录用户名和密码。用户名直接按回车会使用 `share`；密码至少 12 位，输入时不会显示字符。配置完成后服务会自动启动。
-
-### 7. 从另一个 Android 用户访问
-
-在运行服务的 Termux 中查看手机局域网 IP：
-
-```sh
-ip route get 1.1.1.1
-```
-
-找到输出中的 `src` 地址，例如 `src 192.168.1.23`。然后在另一个 Android 用户的浏览器打开：
-
-```text
-http://192.168.1.23:8080
-```
-
-默认数据目录是 `~/multiuser-share`；可改为：
-
-```sh
-export SHARE_DATA_DIR="$HOME/storage/shared/MultiUserShare"
-```
-
-> 使用共享存储前先执行一次 `termux-setup-storage`。不要把数据目录提交进 Git。
-
-## 日常启动与 Git 更新
+## 日常启动
 
 日后启动服务：
 
 ```sh
 multiuser-share
 ```
-
-后续更新：
-
-```sh
-cd ~/android-multiuser-share && git pull
-```
-
-更新后重启 `multiuser-share` 即可。
 
 ## 访问
 
