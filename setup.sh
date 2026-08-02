@@ -53,9 +53,13 @@ cat > "$BIN_DIR/multiuser-share" <<EOF
 #!/data/data/com.termux/files/usr/bin/bash
 set -eu
 RAW_APP="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/app.py"
+GH_PROXY_PREFIX="https://v4.gh-proxy.org/"
 if [ "\${1:-}" = "update" ]; then
   echo "==> 正在更新多用户共享"
-  python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "\$RAW_APP" "$APP_DIR/app.py.new"
+  if ! python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "\${GH_PROXY_PREFIX}\${RAW_APP}" "$APP_DIR/app.py.new" 2>/dev/null; then
+    echo "代理下载失败，改用 GitHub 原地址。"
+    python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "\$RAW_APP" "$APP_DIR/app.py.new"
+  fi
   mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
   echo "更新完成，正在启动服务。"
 fi

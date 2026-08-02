@@ -3,6 +3,7 @@
 set -eu
 
 REPO_RAW="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main"
+GH_PROXY_PREFIX="${GH_PROXY_PREFIX:-https://v4.gh-proxy.org/}"
 APP_DIR="$HOME/.local/share/android-multiuser-share"
 BIN_DIR="${PREFIX:-/data/data/com.termux/files/usr}/bin"
 CONFIG_FILE="$APP_DIR/config.env"
@@ -19,9 +20,18 @@ pkg update -y
 pkg install -y python
 
 mkdir -p "$APP_DIR" "$BIN_DIR"
+download_with_proxy() {
+  local url="$1" target="$2"
+  if python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' \
+    "${GH_PROXY_PREFIX}${url}" "$target" 2>/dev/null; then
+    return 0
+  fi
+  echo "代理下载失败，改用 GitHub 原地址。"
+  python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' \
+    "$url" "$target"
+}
 echo "==> 下载服务程序"
-python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' \
-  "$REPO_RAW/app.py" "$APP_DIR/app.py.new"
+download_with_proxy "$REPO_RAW/app.py" "$APP_DIR/app.py.new"
 mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
 
 if [ -f "$CONFIG_FILE" ]; then
@@ -67,9 +77,13 @@ cat > "$BIN_DIR/multiuser-share" <<'EOF'
 set -eu
 APP_DIR="$HOME/.local/share/android-multiuser-share"
 RAW_APP="https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/app.py"
+GH_PROXY_PREFIX="${GH_PROXY_PREFIX:-https://v4.gh-proxy.org/}"
 if [ "${1:-}" = "update" ]; then
   echo "==> 正在更新多用户共享"
-  python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "$RAW_APP" "$APP_DIR/app.py.new"
+  if ! python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "${GH_PROXY_PREFIX}${RAW_APP}" "$APP_DIR/app.py.new" 2>/dev/null; then
+    echo "代理下载失败，改用 GitHub 原地址。"
+    python -c 'import sys, urllib.request; data = urllib.request.urlopen(sys.argv[1], timeout=30).read(); open(sys.argv[2], "wb").write(data)' "$RAW_APP" "$APP_DIR/app.py.new"
+  fi
   mv "$APP_DIR/app.py.new" "$APP_DIR/app.py"
   echo "更新完成，正在启动服务。"
 fi

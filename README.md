@@ -20,10 +20,10 @@
 在运行服务的那个 Android 用户的 **Termux** 中执行这一行：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/install.sh | bash
+curl -fsSL https://v4.gh-proxy.org/https://raw.githubusercontent.com/Reisen-U/android-multiuser-share/main/install.sh | bash
 ```
 
-安装过程会让你选择是否启用用户名和密码保护；完成后服务会自动启动。以后只需执行：
+安装器会优先通过 ghproxy 下载项目文件，代理不可用时自动尝试 GitHub 原地址。安装过程会让你选择是否启用用户名和密码保护；完成后服务会自动启动。以后只需执行：
 
 ```sh
 multiuser-share
