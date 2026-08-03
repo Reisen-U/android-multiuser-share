@@ -7,17 +7,19 @@
   <style>
     :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
-    body { margin: 0; background: #f3f5f7; color: #17212b; }
-    header { position: sticky; top: 0; z-index: 5; padding: 15px 16px; background: #0d47a1; color: #fff; box-shadow: 0 1px 4px #0003; }
-    header strong { font-size: 19px; }
+    body { margin: 0; background: #f3f6f9; color: #17212b; }
+    header { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 16px; align-items: center; position: sticky; top: 0; z-index: 5; padding: 15px 16px; background: #0d47a1; color: #fff; box-shadow: 0 1px 4px #0003; }
+    .header-brand { min-width: 0; }
+    header strong { display: block; font-size: 19px; white-space: nowrap; }
     header small { display: block; margin-top: 3px; color: #dbe8ff; }
+    .header-warning { min-width: 0; margin: 0; color: #fff; font-size: 14px; line-height: 1.35; }
     main { width: min(920px, 100%); margin: 0 auto; padding: 14px; }
     button, .button { min-height: 40px; border: 0; border-radius: 6px; padding: 9px 13px; background: #1565c0; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
     button:disabled { opacity: .55; cursor: default; }
     button.secondary, .button.secondary { background: #e5ebf2; color: #17212b; }
     button.danger { background: #b3261e; }
     .tabs, .toolbar, .view-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .tabs { margin-bottom: 12px; }
+    .tabs { margin-bottom: 8px; }
     .tabs button { flex: 1; background: #dce6f2; color: #243447; }
     .tabs button.active { background: #0d47a1; color: #fff; }
     .panel { padding: 14px; border: 1px solid #dce2e8; border-radius: 8px; background: #fff; }
@@ -28,9 +30,9 @@
     .toolbar { margin: 10px 0 14px; }
     .view-controls { margin-left: auto; flex-wrap: nowrap; }
     .view-controls button.active { background: #0d47a1; }
-    .message { min-height: 24px; margin: 8px 0; color: #415365; font-size: 14px; }
+    .message { margin: 0 0 8px; color: #415365; font-size: 14px; }
+    .message:empty { display: none; }
     .message.error { color: #b3261e; }
-    .warning { margin-bottom: 12px; padding: 10px; border: 1px solid #f1cb6c; border-radius: 6px; background: #fff4d6; color: #624b00; }
     .empty { padding: 28px 8px; text-align: center; color: #71808e; }
     .note { margin-top: 10px; padding: 12px; border: 1px solid #dfe5ea; border-radius: 7px; }
     .note-actions, .file-meta { display: flex; gap: 8px; align-items: center; }
@@ -44,16 +46,36 @@
     .note-footer { color: #71808e; font-size: 13px; }
     .note-actions { margin-top: 9px; }
     .note-actions button { min-height: 34px; padding: 6px 10px; }
-    .file-controls { display: grid; gap: 8px; margin: 4px 0 14px; }
-    .file-picker, .expiry-control, .file-upload-row, .file-bulk-actions, .file-layout-actions, .file-display-options { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .file-picker { min-width: 0; }
-    .file-picker-name { max-width: min(360px, 70vw); overflow: hidden; color: #536473; text-overflow: ellipsis; white-space: nowrap; }
-    .expiry-control { color: #344658; }
-    .expiry-control input { width: 86px; }
+    .file-blocks { display: grid; gap: 10px; }
+    .file-block { min-width: 0; padding: 12px; border: 1px solid #dce2e8; border-radius: 8px; background: #fff; }
+    .file-block-label { margin-bottom: 9px; color: #71808e; font-size: 12px; font-weight: 700; }
+    .file-block-label::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: #aeb9c4; vertical-align: 1px; }
+    .file-upload-grid { display: grid; grid-template-columns: 92px minmax(90px, 1fr) 92px; gap: 10px; align-items: center; }
+    .file-picker-name { min-width: 0; overflow: hidden; color: #536473; text-overflow: ellipsis; white-space: nowrap; }
     .file-primary-button { width: 92px; min-width: 92px; }
-    .file-bulk-actions button { white-space: nowrap; }
-    .file-layout-actions .view-controls { margin-left: auto; }
-    .file-display-options { gap: 14px; }
+    .file-bulk-actions { display: grid; grid-template-columns: 40px calc(25% - 6px) minmax(0, 1fr) 40px; gap: 8px; align-items: stretch; }
+    .file-bulk-actions > button, .file-bulk-actions > .split-action { min-width: 0; }
+    .file-bulk-actions button { width: 100%; white-space: nowrap; }
+    .file-bulk-actions button.compact-square { width: 40px; height: 40px; min-height: 40px; padding: 3px; white-space: normal; font-size: 12px; line-height: 1.1; }
+    .file-options-row { display: grid; grid-template-columns: max-content max-content minmax(96px, 1fr); gap: 14px; align-items: center; margin-top: 10px; }
+    .file-options-row .view-controls { justify-self: end; }
+    .file-content { margin-top: 12px; }
+    .split-action { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; min-width: 0; height: 40px; align-items: stretch; }
+    .split-action > .split-main, .split-action > .split-toggle { display: grid; height: 40px; min-height: 40px; margin: 0; padding: 0; place-items: center; appearance: none; line-height: 1; }
+    .split-action > .split-main { border-radius: 6px 0 0 6px; white-space: nowrap; }
+    .split-action > .split-toggle { width: 40px; min-width: 40px; border-left: 1px solid #ffffff73; border-radius: 0 6px 6px 0; font-size: 10px; }
+    .file-upload-grid > .split-action { width: 92px; grid-template-columns: 52px 40px; }
+    .split-action.secondary > .split-toggle { border-left-color: #c7d0da; }
+    .action-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; width: max-content; min-width: 190px; max-width: min(260px, calc(100vw - 36px)); padding: 6px; border: 1px solid #cfd7df; border-radius: 7px; background: #fff; box-shadow: 0 8px 24px #17212b2e; }
+    .action-menu[hidden] { display: none; }
+    .action-menu-title { padding: 6px 9px 4px; color: #71808e; font-size: 12px; font-weight: 700; }
+    .action-menu button { width: 100%; min-height: 36px; border-radius: 4px; padding: 7px 9px; background: transparent; color: #17212b; text-align: left; font-weight: 500; }
+    .action-menu button:hover, .action-menu button:focus-visible { background: #eaf1f8; }
+    .action-menu button.selected::before { content: "✓"; display: inline-block; width: 20px; color: #1565c0; font-weight: 800; }
+    .action-menu button:not(.selected)::before { content: ""; display: inline-block; width: 20px; }
+    .custom-expiry { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 6px; border-top: 1px solid #e3e8ed; }
+    .custom-expiry input { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid #aeb9c4; border-radius: 4px; font: inherit; }
+    .custom-expiry button { width: auto; background: #e5ebf2; font-weight: 600; }
     .icon-button { display: grid; width: 44px; min-width: 44px; padding: 0; place-items: center; color: #59636c; font-size: 28px; line-height: 1; }
     .icon-button.active { color: #fff; }
     .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -84,19 +106,30 @@
     .files-grid .filename { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; }
     .file-meta { margin-top: 3px; color: #71808e; font-size: 12px; }
     @media (max-width: 560px) {
-      .file-upload-row { flex-wrap: nowrap; }
-      .file-bulk-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+      main { padding: 10px; }
+      .file-block { padding: 10px 12px; }
+      .file-upload-grid { width: 100%; grid-template-columns: 92px minmax(0, 1fr) 92px; gap: 7px; }
+      .file-upload-grid > * { min-width: 0; }
+      .file-upload-grid .split-action { grid-template-columns: 52px 40px; }
+      .file-picker-name { font-size: 13px; }
+      .file-bulk-actions { grid-template-columns: 40px calc(25% - 4.5px) minmax(0, 1fr) 40px; gap: 6px; }
       .file-bulk-actions button { min-width: 0; padding: 8px 5px; font-size: 13px; }
+      .file-bulk-actions button.compact-square { padding: 3px; font-size: 12px; }
+      .file-bulk-actions .split-action { grid-template-columns: minmax(0, 1fr) 40px; }
+      .file-options-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; }
+      .file-options-row .selection-toggle { font-size: 13px; }
     }
   </style>
 </head>
 <body>
   <header>
-    <strong>多用户共享</strong>
-    <small id="authState">正在连接服务...</small>
+    <div class="header-brand">
+      <strong>多用户共享</strong>
+      <small id="authState">正在连接服务...</small>
+    </div>
+    <div id="publicWarning" class="header-warning" hidden>当前为公开访问，同一 Wi-Fi 的设备也可以访问。请勿传输高度敏感内容。</div>
   </header>
   <main>
-    <div id="publicWarning" class="warning" hidden>当前为公开访问，同一 Wi-Fi 的设备也可以访问。请勿传输高度敏感内容。</div>
     <nav class="tabs" aria-label="内容类型">
       <button id="textTab" class="active" type="button">文本</button>
       <button id="filesTab" type="button">文件</button>
@@ -113,36 +146,60 @@
       <div id="notes"></div>
     </section>
 
-    <section id="filesPanel" class="panel" hidden>
-      <div class="file-controls">
-        <div class="file-picker">
+    <section id="filesPanel" hidden>
+      <div class="file-blocks">
+        <div class="file-block">
+          <div class="file-block-label">上传区</div>
+          <div class="file-upload-grid">
           <input id="fileInput" type="file" multiple hidden>
           <button id="chooseFiles" class="secondary file-primary-button" type="button">选择文件</button>
           <span id="fileSelection" class="file-picker-name">未选择文件</span>
+            <div class="split-action">
+              <button id="uploadFiles" class="split-main" type="button" disabled>上传</button>
+              <button id="uploadMenuToggle" class="split-toggle" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="uploadMenu" title="选择有效期">▼</button>
+              <div id="uploadMenu" class="action-menu" role="menu" hidden>
+                <div class="action-menu-title">文件有效期</div>
+                <button type="button" role="menuitemradio" data-expiry="0">永久有效</button>
+                <button type="button" role="menuitemradio" data-expiry="10">10 分钟</button>
+                <button type="button" role="menuitemradio" data-expiry="30">30 分钟</button>
+                <button type="button" role="menuitemradio" data-expiry="60">1 小时</button>
+                <button type="button" role="menuitemradio" data-expiry="1440">1 天</button>
+                <button type="button" role="menuitemradio" data-expiry="10080">7 天</button>
+                <div class="custom-expiry">
+                  <input id="customExpiry" type="number" min="1" inputmode="numeric" placeholder="自定义分钟" aria-label="自定义有效期分钟数">
+                  <button id="applyCustomExpiry" type="button">应用</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="file-upload-row">
-          <button id="uploadFiles" class="file-primary-button" type="button">上传文件</button>
-          <label class="expiry-control">过期时间 <input id="expiry" type="number" min="1" placeholder="分钟" aria-label="过期时间（分钟）"></label>
-        </div>
-        <div class="file-bulk-actions">
-          <button id="selectAllFiles" class="secondary" type="button">全选</button>
-          <button id="clearFileSelection" class="secondary" type="button">取消选中</button>
-          <button id="downloadFiles" class="secondary" type="button">逐个下载</button>
-          <button id="downloadZip" class="secondary" type="button">打包下载</button>
-        </div>
-        <div class="file-layout-actions">
-          <button id="deleteFiles" class="danger" type="button">删除所选</button>
-          <span class="view-controls" aria-label="文件显示方式">
-            <button id="gridView" class="secondary icon-button" type="button" title="网格视图" aria-label="网格视图"><span aria-hidden="true">▦</span></button>
-            <button id="listView" class="secondary icon-button" type="button" title="列表视图" aria-label="列表视图"><span aria-hidden="true">☰</span></button>
-          </span>
-        </div>
-        <div class="file-display-options">
-          <label class="selection-toggle"><input id="groupFiles" type="checkbox"> 按上传时间分组</label>
-          <label class="selection-toggle"><input id="showThumbnails" type="checkbox"> 显示缩略图</label>
+
+        <div class="file-block">
+          <div class="file-block-label">文件管理</div>
+          <div class="file-bulk-actions">
+            <button id="selectAllFiles" class="secondary compact-square" type="button">全选</button>
+            <button id="clearFileSelection" class="secondary" type="button">取消选中</button>
+            <div class="split-action secondary">
+              <button id="downloadFiles" class="secondary split-main" type="button">下载</button>
+              <button id="downloadMenuToggle" class="secondary split-toggle" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="downloadMenu" aria-label="选择下载方式" title="选择下载方式">▼</button>
+              <div id="downloadMenu" class="action-menu" role="menu" hidden>
+                <div class="action-menu-title">下载方式</div>
+                <button id="downloadZip" type="button" role="menuitem">打包下载（ZIP）</button>
+              </div>
+            </div>
+            <button id="deleteFiles" class="danger compact-square" type="button">删除</button>
+          </div>
+          <div class="file-options-row">
+            <label class="selection-toggle"><input id="showThumbnails" type="checkbox"> 显示缩略图</label>
+            <label class="selection-toggle"><input id="groupFiles" type="checkbox" checked> 按上传时间分组</label>
+            <span class="view-controls" aria-label="文件显示方式">
+              <button id="gridView" class="secondary icon-button" type="button" title="网格视图" aria-label="网格视图"><span aria-hidden="true">▦</span></button>
+              <button id="listView" class="secondary icon-button" type="button" title="列表视图" aria-label="列表视图"><span aria-hidden="true">☰</span></button>
+            </span>
+          </div>
+          <div id="files" class="file-content"></div>
         </div>
       </div>
-      <div id="files"></div>
     </section>
   </main>
 
@@ -152,7 +209,8 @@
     let state = { notes: [], files: [] };
     let viewMode = localStorage.getItem("share-view") || "grid";
     let showThumbnails = localStorage.getItem("share-thumbnails") !== "0";
-    let groupFilesByBatch = localStorage.getItem("share-group-files") === "1";
+    let groupFilesByBatch = localStorage.getItem("share-group-files") !== "0";
+    let selectedExpiryMinutes = Math.max(0, Number.parseInt(localStorage.getItem("share-upload-expiry") || "0", 10) || 0);
     let selectedFileNames = new Set();
 
     function setMessage(text, error) {
@@ -253,16 +311,16 @@
       const availableNames = new Set(state.files.map(file => file.name));
       selectedFileNames = new Set(Array.from(selectedFileNames).filter(name => availableNames.has(name)));
       if (!state.files.length) {
-        host.className = "";
+        host.className = "file-content";
         host.append(empty("暂无文件"));
         syncFileSelectionControls();
         return;
       }
       if (groupFilesByBatch) {
-        host.className = "file-groups";
+        host.className = "file-content file-groups";
         collectFileGroups(state.files).forEach(group => host.append(renderFileGroup(group)));
       } else {
-        host.className = fileLayoutClass();
+        host.className = "file-content " + fileLayoutClass();
         state.files.forEach(file => host.append(renderFileCard(file)));
       }
       syncFileSelectionControls();
@@ -369,6 +427,10 @@
       const selectedCount = items.filter(item => item.checked).length;
       byId("selectAllFiles").disabled = items.length === 0 || selectedCount === items.length;
       byId("clearFileSelection").disabled = selectedCount === 0;
+      byId("downloadFiles").disabled = selectedCount === 0;
+      byId("downloadMenuToggle").disabled = selectedCount === 0;
+      byId("downloadZip").disabled = selectedCount === 0;
+      byId("deleteFiles").disabled = selectedCount === 0;
       document.querySelectorAll(".file-group-check").forEach(group => {
         const members = items.filter(item => item.dataset.batchId === group.dataset.batchId);
         const groupSelected = members.filter(item => item.checked).length;
@@ -389,6 +451,40 @@
       let index = 0;
       while (bytes >= 1024 && index < units.length - 1) { bytes /= 1024; index++; }
       return (index ? bytes.toFixed(1) : Math.round(bytes)) + " " + units[index];
+    }
+
+    function expiryLabel(minutes) {
+      if (!minutes) return "永久有效";
+      if (minutes % 10080 === 0) return (minutes / 10080) + " 周";
+      if (minutes % 1440 === 0) return (minutes / 1440) + " 天";
+      if (minutes % 60 === 0) return (minutes / 60) + " 小时";
+      return minutes + " 分钟";
+    }
+
+    function syncExpiryMenu() {
+      document.querySelectorAll("#uploadMenu [data-expiry]").forEach(item => {
+        const selected = Number.parseInt(item.dataset.expiry, 10) === selectedExpiryMinutes;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-checked", String(selected));
+      });
+      byId("uploadMenuToggle").title = "文件有效期：" + expiryLabel(selectedExpiryMinutes);
+      byId("uploadMenuToggle").setAttribute("aria-label", "选择文件有效期，当前为" + expiryLabel(selectedExpiryMinutes));
+    }
+
+    function setActionMenu(menu, toggle, open) {
+      menu.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+    }
+
+    function closeActionMenus() {
+      setActionMenu(byId("uploadMenu"), byId("uploadMenuToggle"), false);
+      setActionMenu(byId("downloadMenu"), byId("downloadMenuToggle"), false);
+    }
+
+    function toggleActionMenu(menu, toggle) {
+      const open = menu.hidden;
+      closeActionMenus();
+      setActionMenu(menu, toggle, open);
     }
 
     async function copyText(text) {
@@ -423,6 +519,42 @@
     byId("fileInput").addEventListener("change", () => {
       const files = Array.from(byId("fileInput").files || []);
       byId("fileSelection").textContent = files.length === 0 ? "未选择文件" : "选择了 " + files.length + " 个文件";
+      byId("uploadFiles").disabled = files.length === 0;
+    });
+    byId("uploadMenuToggle").addEventListener("click", event => {
+      event.stopPropagation();
+      toggleActionMenu(byId("uploadMenu"), event.currentTarget);
+    });
+    byId("downloadMenuToggle").addEventListener("click", event => {
+      event.stopPropagation();
+      toggleActionMenu(byId("downloadMenu"), event.currentTarget);
+    });
+    byId("uploadMenu").addEventListener("click", event => {
+      const option = event.target.closest("[data-expiry]");
+      if (!option) return;
+      selectedExpiryMinutes = Number.parseInt(option.dataset.expiry, 10) || 0;
+      localStorage.setItem("share-upload-expiry", String(selectedExpiryMinutes));
+      syncExpiryMenu();
+      closeActionMenus();
+      setMessage("文件有效期已设为" + expiryLabel(selectedExpiryMinutes));
+    });
+    byId("applyCustomExpiry").addEventListener("click", () => {
+      const minutes = Number.parseInt(byId("customExpiry").value, 10);
+      if (!Number.isFinite(minutes) || minutes < 1 || minutes > 525600) {
+        setMessage("自定义有效期请输入 1 至 525600 分钟", true);
+        return;
+      }
+      selectedExpiryMinutes = minutes;
+      localStorage.setItem("share-upload-expiry", String(selectedExpiryMinutes));
+      syncExpiryMenu();
+      closeActionMenus();
+      setMessage("文件有效期已设为" + expiryLabel(selectedExpiryMinutes));
+    });
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".split-action")) closeActionMenus();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeActionMenus();
     });
     byId("gridView").addEventListener("click", () => { viewMode = "grid"; localStorage.setItem("share-view", viewMode); renderFiles(); });
     byId("listView").addEventListener("click", () => { viewMode = "list"; localStorage.setItem("share-view", viewMode); renderFiles(); });
@@ -485,12 +617,12 @@
       const tooLarge = files.find(file => file.size > 512 * 1024 * 1024);
       if (tooLarge) throw new Error(tooLarge.name + " 超过 512 MB");
       const data = new FormData();
-      const expiry = byId("expiry").value;
-      if (expiry) data.append("expiry", expiry);
+      if (selectedExpiryMinutes) data.append("expiry", String(selectedExpiryMinutes));
       files.forEach(file => data.append("files", file));
       const result = await request("/api/files/upload", { method: "POST", body: data });
       byId("fileInput").value = "";
       byId("fileSelection").textContent = "未选择文件";
+      byId("uploadFiles").disabled = true;
       await refresh();
       setMessage("已上传 " + result.saved + " 个文件");
     }));
@@ -511,6 +643,7 @@
     }));
 
     byId("downloadZip").addEventListener("click", event => run(event.currentTarget, "打包中...", async () => {
+      closeActionMenus();
       const names = selected(".file-check");
       if (!names.length) throw new Error("请先选择文件");
       const response = await request("/api/files/zip", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ names }) });
@@ -531,6 +664,7 @@
       setMessage("所选文件已删除");
     }));
 
+    syncExpiryMenu();
     refresh().catch(error => setMessage(error.message || "无法连接共享服务", true));
   </script>
 </body>
