@@ -8,12 +8,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -28,6 +30,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final int REQUEST_NOTIFICATIONS = 77;
+    private static final String PROJECT_URL = "https://github.com/Reisen-U/android-multiuser-share";
     private TextView statusView;
     private TextView addressView;
     private TextView qrHint;
@@ -74,16 +77,37 @@ public class MainActivity extends Activity {
 
     private void buildUi() {
         ConfigStore config = new ConfigStore(this);
+        LinearLayout screen = new LinearLayout(this);
+        screen.setOrientation(LinearLayout.VERTICAL);
+
+        TextView appBar = text("HTTP共享", 20, Color.WHITE);
+        appBar.setGravity(Gravity.CENTER_VERTICAL);
+        appBar.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        appBar.setPadding(dp(20), 0, dp(20), 0);
+        appBar.setBackgroundColor(Color.rgb(13, 71, 161));
+        appBar.setElevation(dp(4));
+        screen.addView(appBar, lp(-1, dp(56)));
+
         ScrollView scroll = new ScrollView(this);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(20), dp(18), dp(20), dp(28));
         scroll.addView(root);
+        screen.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        TextView title = text("多用户共享", 28, Color.rgb(13, 71, 161));
-        root.addView(title, lp(-1, -2));
-        TextView subtitle = text("在本机启动一个局域网共享站，其他 Android 用户用浏览器访问。", 15, Color.DKGRAY);
-        subtitle.setPadding(0, dp(4), 0, dp(18));
+        screen.setOnApplyWindowInsetsListener((view, insets) -> {
+            int topInset = insets.getSystemWindowInsetTop();
+            int bottomInset = insets.getSystemWindowInsetBottom();
+            appBar.setPadding(dp(20), topInset, dp(20), 0);
+            LinearLayout.LayoutParams appBarParams = (LinearLayout.LayoutParams) appBar.getLayoutParams();
+            appBarParams.height = dp(56) + topInset;
+            appBar.setLayoutParams(appBarParams);
+            root.setPadding(dp(20), dp(18), dp(20), dp(28) + bottomInset);
+            return insets;
+        });
+
+        TextView subtitle = text("在本机启动一个局域网共享站，其他设备通过浏览器即可访问。", 15, Color.DKGRAY);
+        subtitle.setPadding(0, 0, 0, dp(18));
         root.addView(subtitle, lp(-1, -2));
 
         statusView = text("服务状态：未启动", 17, Color.rgb(40, 40, 40));
@@ -112,19 +136,35 @@ public class MainActivity extends Activity {
         actions.addView(stopButton, weightLp(1));
         root.addView(actions, lp(-1, -2));
 
-        root.addView(sectionTitle("首次启动设置"), lp(-1, -2));
-        usernameInput = field("用户名", config.username(), false);
-        passwordInput = field("密码（启用保护时至少 12 位）", config.password(), true);
-        portInput = field("端口（1024-65535）", String.valueOf(config.port()), false);
-        root.addView(usernameInput, lp(-1, -2));
-        root.addView(passwordInput, lp(-1, -2));
-        root.addView(portInput, lp(-1, -2));
+        root.addView(sectionTitle("参数设置"), lp(-1, -2));
+        usernameInput = field("请输入用户名", config.username(), false);
+        passwordInput = field("至少 12 位", config.password(), true);
+        portInput = field("1024-65535", String.valueOf(config.port()), false);
+
+        root.addView(labeledFieldRow("用户名", usernameInput, null), lp(-1, -2));
+
+        CheckBox showPassword = new CheckBox(this);
+        showPassword.setText("显示密码");
+        showPassword.setTextSize(14);
+        showPassword.setSingleLine(true);
+        showPassword.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            int selection = passwordInput.getSelectionStart();
+            passwordInput.setInputType(InputType.TYPE_CLASS_TEXT
+                    | (isChecked ? InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                    : InputType.TYPE_TEXT_VARIATION_PASSWORD));
+            passwordInput.setTypeface(Typeface.DEFAULT);
+            passwordInput.setSelection(Math.max(0, Math.min(selection, passwordInput.length())));
+        });
+        root.addView(labeledFieldRow("密码", passwordInput, showPassword), lp(-1, -2));
+        root.addView(labeledFieldRow("端口", portInput, null), lp(-1, -2));
 
         authSwitch = new Switch(this);
         authSwitch.setText("启用密码保护（推荐）");
         authSwitch.setTextSize(16);
         authSwitch.setChecked(config.authEnabled());
-        root.addView(authSwitch, lp(-1, -2));
+        LinearLayout.LayoutParams authParams = lp(-1, -2);
+        authParams.setMargins(0, dp(12), 0, 0);
+        root.addView(authSwitch, authParams);
         TextView warning = text("公开访问时，同一 Wi-Fi 的设备也可以访问。服务使用 HTTP，不适合传输高度敏感内容。", 13, Color.rgb(173, 89, 0));
         warning.setPadding(0, dp(4), 0, dp(12));
         root.addView(warning, lp(-1, -2));
@@ -144,12 +184,28 @@ public class MainActivity extends Activity {
         });
         root.addView(openData, lp(-1, -2));
 
+        View footerDivider = new View(this);
+        footerDivider.setBackgroundColor(Color.rgb(218, 223, 230));
+        LinearLayout.LayoutParams dividerParams = lp(-1, dp(1));
+        dividerParams.setMargins(dp(48), dp(22), dp(48), 0);
+        root.addView(footerDivider, dividerParams);
+
+        TextView projectLink = text("GitHub 项目主页\n" + PROJECT_URL, 13, Color.rgb(13, 71, 161));
+        projectLink.setGravity(Gravity.CENTER);
+        projectLink.setPadding(0, dp(12), 0, dp(4));
+        projectLink.setLineSpacing(dp(3), 1f);
+        projectLink.setContentDescription("在浏览器中打开项目 GitHub 地址");
+        projectLink.setOnClickListener(v ->
+                startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(PROJECT_URL))));
+        root.addView(projectLink, lp(-1, -2));
+
         startButton.setOnClickListener(v -> startSharing());
         stopButton.setOnClickListener(v -> stopSharing());
         authSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (!isChecked) Toast.makeText(this, "公开访问风险较高，请仅在可信网络使用", Toast.LENGTH_LONG).show();
         });
-        setContentView(scroll);
+        setContentView(screen);
+        screen.requestApplyInsets();
     }
 
     private void startSharing() {
@@ -229,6 +285,7 @@ public class MainActivity extends Activity {
 
     private EditText field(String hint, String value, boolean password) {
         EditText field = new EditText(this);
+        field.setId(View.generateViewId());
         field.setHint(hint);
         field.setText(value);
         field.setTextSize(16);
@@ -236,6 +293,19 @@ public class MainActivity extends Activity {
         field.setPadding(0, dp(6), 0, dp(6));
         if (password) field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         return field;
+    }
+
+    private LinearLayout labeledFieldRow(String labelText, EditText field, View trailingView) {
+        LinearLayout fieldRow = row();
+        fieldRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        TextView label = text(labelText, 16, Color.rgb(45, 45, 45));
+        label.setGravity(Gravity.CENTER_VERTICAL);
+        label.setLabelFor(field.getId());
+        fieldRow.addView(label, lp(dp(64), -1));
+        fieldRow.addView(field, new LinearLayout.LayoutParams(0, -2, 1));
+        if (trailingView != null) fieldRow.addView(trailingView, lp(-2, -2));
+        return fieldRow;
     }
 
     private TextView sectionTitle(String title) {
