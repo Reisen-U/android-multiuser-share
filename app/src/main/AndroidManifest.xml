@@ -9,7 +9,9 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/app_icon_http_navy"
         android:label="多用户共享"
+        android:roundIcon="@drawable/app_icon_http_navy"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
